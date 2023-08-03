@@ -16,15 +16,16 @@
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
   <script>
-    let camera, scene, renderer;
+    let camera, scene, renderer, controls;
     let gyroscopeActive = false;
 
     function init() {
       scene = new THREE.Scene();
 
+
       // Load the GLTF file of your 3D world
       const loader = new THREE.GLTFLoader();
-      loader.load('path/to/your/world.gltf', function (gltf) {
+      loader.load('files/Home.gltf', function (gltf) {
         const worldModel = gltf.scene;
         scene.add(worldModel);
       });

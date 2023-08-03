@@ -1,96 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <title>3D World with Gyroscope Control</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no,shrink-to-fit=no">
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>HREE.js </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <style>
+        canvas {
+            display: block;
+        }
+        
+        html {
+            overflow: hidden;
+            background: #000;
+        }
+    </style>
+
 </head>
 
-<body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
-  <script>
-    let camera, scene, renderer, controls;
-    let gyroscopeActive = false;
+<body translate="no">
+    <script>
+        console.clear();
+    </script>
+    <script src="https://unpkg.com/three@0.87.1/build/three.js"></script>
+    <script src="https://unpkg.com/three@0.87.1/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.87.1/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-1b93190375e9ccc259df3a57c1abc0e64599724ae30d7ea4c6877eb615f89387.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenMax.min.js"></script>
+    <script id="rendered-js">
+        const backgroundColor = 0x000000;
 
-    function init() {
-      scene = new THREE.Scene();
+        var renderCalls = [];
 
-
-      // Load the GLTF file of your 3D world
-      const loader = new THREE.GLTFLoader();
-      loader.load('files/Home.gltf', function (gltf) {
-        const worldModel = gltf.scene;
-        scene.add(worldModel);
-      });
-
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 0, 10); // Set the camera position
-
-      renderer = new THREE.WebGLRenderer();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
-
-      // Request gyroscope access upon user interaction
-      document.body.addEventListener('click', requestGyroscopeAccess);
-
-      // Event listener for deviceorientation event
-      window.addEventListener('deviceorientation', onDeviceOrientation, true);
-
-      // Resize handling
-      window.addEventListener('resize', onWindowResize, false);
-
-      render();
-    }
-
-    function requestGyroscopeAccess() {
-      if (!DeviceOrientationEvent || !DeviceOrientationEvent.requestPermission) {
-        console.warn("This browser does not support requesting DeviceOrientationEvent permission.");
-        gyroscopeActive = false;
-        return;
-      }
-
-      DeviceOrientationEvent.requestPermission().then(response => {
-        if (response == 'granted') {
-          gyroscopeActive = true;
-        } else {
-          console.warn("Permission Denied");
-          gyroscopeActive = false;
+        function render() {
+            requestAnimationFrame(render);
+            renderCalls.forEach(callback => {
+                callback();
+            });
         }
-      });
-    }
+        render();
+        var scene = new THREE.Scene();
 
-    function onDeviceOrientation(event) {
-      if (!gyroscopeActive) return;
+        var camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 800);
+        camera.position.set(1, -30, 30);
 
-      // Convert the gyroscope angles to radians
-      const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
-      const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-      const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
+        var renderer = new THREE.WebGLRenderer({
+            antialias: true
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(backgroundColor); //0x );
 
-      // Update the camera rotation based on the gyroscope angles
-      camera.rotation.set(beta, alpha, -gamma);
-    }
+        renderer.toneMapping = THREE.LinearToneMapping;
+        renderer.toneMappingExposure = Math.pow(0.94, 5.0);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFShadowMap;
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }, false);
 
-    function render() {
-      requestAnimationFrame(render);
-      renderer.render(scene, camera);
-    }
+        document.body.appendChild(renderer.domElement);
 
-    init();
-  </script>
+        function renderScene() {
+            renderer.render(scene, camera);
+        }
+        renderCalls.push(renderScene);
+
+        var controls = new THREE.OrbitControls(camera);
+
+        controls.rotateSpeed = 0.3;
+        controls.zoomSpeed = 0.9;
+
+        controls.minDistance = 3;
+        controls.maxDistance = 20;
+
+        controls.minPolarAngle = 0; // radians
+        controls.maxPolarAngle = Math.PI / 2; // radians
+
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        renderCalls.push(function() {
+            controls.update();
+        });
+
+        var light = new THREE.PointLight(0xffffcc, 20, 200);
+        light.position.set(4, 30, -20);
+        scene.add(light);
+
+        var light2 = new THREE.AmbientLight(0x20202A, 20, 100);
+        light2.position.set(30, -10, 30);
+        scene.add(light2);
+
+        var loader = new THREE.GLTFLoader();
+        loader.crossOrigin = true;
+        loader.load('https://raw.githubusercontent.com/HimanshuMukane/gyroscope/main/files/Home.gltf', function(data) {
+            var object = data.scene;
+            object.position.set(0, 0, 0);
+            object.rotation.set(Math.PI / 10, 0, 0);
+            scene.add(object);
+
+            // Check for gyroscope support
+            if (window.DeviceOrientationEvent) {
+                // Request gyroscope permission if not yet granted
+                if (typeof(DeviceOrientationEvent.requestPermission) === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                // Add gyroscope event listener
+                                window.addEventListener('deviceorientation', handleOrientation, true);
+                            } else {
+                                console.log('Gyroscope permission denied.');
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    // Gyroscope events are supported and no permission is needed
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                }
+            } else {
+                console.log('Gyroscope is not supported on this device.');
+            }
+        });
+
+        function handleOrientation(event) {
+            // Convert gyroscope data to radians
+            var alpha = THREE.MathUtils.degToRad(event.alpha); // Z-axis rotation
+            var beta = THREE.MathUtils.degToRad(event.beta); // X-axis rotation
+            var gamma = THREE.MathUtils.degToRad(event.gamma); // Y-axis rotation
+
+            // Update the object's rotation based on gyroscope data
+            object.rotation.set(beta, gamma, alpha);
+        }
+    </script>
 </body>
-
 </html>

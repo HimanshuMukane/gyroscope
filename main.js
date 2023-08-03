@@ -1,5 +1,9 @@
+import * as THREE from './node_modules/three/build/three.module.js';
+import { GLTFLoader } from './node_modules/three-gltf-loader/Build/GLTFLoader.js';
+
 let camera, scene, renderer;
 let gltfModel;
+
 
 function init() {
   scene = new THREE.Scene();
@@ -21,8 +25,9 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.getElementById('container').appendChild(renderer.domElement);
 
-  const loader = new THREE.GLTFLoader();
-  loader.load('path/to/your/gltf/model.gltf', (gltf) => {
+  // Load the GLTF model
+  const loader = new GLTFLoader();
+  loader.load('files/Home.gltf', (gltf) => {
     gltfModel = gltf.scene;
     scene.add(gltfModel);
   });
